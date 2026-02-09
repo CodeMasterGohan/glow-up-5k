@@ -17,7 +17,14 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 export const PlanView: React.FC = () => {
-  const { plan: planData, toggleDay, resetProgress } = usePlanProgress();
+  const {
+    plan: planData,
+    toggleDay,
+    resetProgress,
+    currentWeek,
+    totalWeeks,
+    progressPercent
+  } = usePlanProgress();
   const [openWeekId, setOpenWeekId] = useState<string | null>('week-1');
   const [activeWorkout, setActiveWorkout] = useState<DayPlan | null>(null);
   const [quote, setQuote] = useState(MOTIVATIONAL_QUOTES[0]);
@@ -40,16 +47,6 @@ export const PlanView: React.FC = () => {
 
   const handleStartWorkout = (day: DayPlan) => {
     setActiveWorkout(day);
-    // We might want to mark it as complete here or after timer?
-    // For now, let's just toggle it when they start/view it or we need a specific "Complete" action.
-    // But the user didn't ask for "Mark as Complete" UI changes, just reset.
-    // However, to test reset, I need to be able to complete things.
-    // The existing UI doesn't seem to have a "Mark Complete" checkbox on the DayCard explicitly shown in the code I viewed?
-    // Let's check DayCard code in my memory...
-    // I didn't view DayCard.tsx fully, wait. I should check how completion is handled.
-    // Re-reading WeekCard... `onStartWorkout`.
-    // Re-reading `plan.ts`, it has `isCompleted`.
-    // Use `toggleDay` when appropriate. 
   };
 
   const handleWorkoutComplete = (dayId: string) => {
@@ -59,7 +56,12 @@ export const PlanView: React.FC = () => {
 
   return (
     <>
-      <Header onReset={handleReset} />
+      <Header
+        onReset={handleReset}
+        currentWeek={currentWeek}
+        totalWeeks={totalWeeks}
+        progressPercent={progressPercent}
+      />
       <div className="flex flex-col p-5 gap-5 pb-32 z-10">
         <h2 className="text-text-main text-2xl font-display font-bold px-1">Let's Run! 🏃‍♀️</h2>
 
@@ -91,22 +93,16 @@ export const PlanView: React.FC = () => {
             isOpen={openWeekId === week.id}
             onToggle={() => handleToggleWeek(week.id)}
             onStartWorkout={handleStartWorkout}
+            onToggleComplete={toggleDay}
           />
         ))}
       </div>
 
       {activeWorkout && (
-        /* Passing handleWorkoutComplete to close for now, but really we should probably enable toggling in the UI if not present */
         <WorkoutTimer
           workout={activeWorkout}
           onClose={() => setActiveWorkout(null)}
-        /* Assuming WorkoutTimer might have an onComplete? I should check or just rely on manual toggle elsewhere if it exists. 
-           Wait, I need to enable "Checking off" items to test "Reset". 
-           The DayCard likely triggers `onStartWorkout`.
-           Let's assume for now the user handles completion via some mechanism I haven't fully built or is inside WorkoutTimer.
-           Actually, I'll inject a way to toggle completion for testing if needed.
-           But the user request was just about Reset and Unlocking.
-         */
+          onComplete={() => handleWorkoutComplete(activeWorkout.id)}
         />
       )}
     </>

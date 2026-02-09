@@ -2,9 +2,17 @@ import React from 'react';
 
 interface HeaderProps {
   onReset?: () => void;
+  currentWeek?: number;
+  totalWeeks?: number;
+  progressPercent?: number;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onReset }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onReset,
+  currentWeek = 1,
+  totalWeeks = 5,
+  progressPercent = 0
+}) => {
   const handleSettingsClick = () => {
     if (onReset) {
       if (window.confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
@@ -35,10 +43,13 @@ export const Header: React.FC<HeaderProps> = ({ onReset }) => {
       <div className="flex flex-col gap-3 px-6 pb-6 pt-0">
         <div className="flex justify-between items-end">
           <p className="text-text-light text-xs font-bold uppercase tracking-widest">Your Journey</p>
-          <p className="text-primary-dark font-display font-bold">Week 2 of 5</p>
+          <p className="text-primary-dark font-display font-bold">Week {currentWeek} of {totalWeeks}</p>
         </div>
         <div className="h-4 w-full rounded-full bg-slate-100 shadow-inner overflow-hidden ring-1 ring-white">
-          <div className="h-full rounded-full bg-gradient-to-r from-secondary to-primary shadow-[0_0_15px_rgba(255,154,174,0.5)] transition-all duration-500 ease-out relative w-[30%]">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-secondary to-primary shadow-[0_0_15px_rgba(255,154,174,0.5)] transition-all duration-500 ease-out relative"
+            style={{ width: `${progressPercent}%` }}
+          >
             <div className="absolute inset-0 bg-white opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PC9zdmc+')]"></div>
           </div>
         </div>

@@ -22,23 +22,11 @@ export const usePlanProgress = () => {
 
     const resetProgress = () => {
         setCompletedDayIds([]);
+        localStorage.removeItem('glowUp5k_completedDays');
     };
 
     const plan = useMemo(() => {
         return planData.map(week => {
-            // Map days to specific week to check status
-            // Note: planData days are empty for collapsed weeks in the original file, 
-            // but for a real app we'd expect data. 
-            // In the current codebase, planData has days populated only for week 2 in the example.
-            // We will assume for this logic that we are operating on the provided data structure.
-
-            // Since the original data has empty arrays for some weeks, we can't fully compute status 
-            // based on days if they aren't there. However, we will implement the logic 
-            // assuming the `days` array WOULD be populated or we just map what is there.
-
-            // Actually, we need to preserve the original structure but update `isCompleted`.
-            // If days are empty, we can't really mark them complete.
-
             const updatedDays = week.days.map(day => ({
                 ...day,
                 isCompleted: completedDayIds.includes(day.id)
@@ -47,13 +35,11 @@ export const usePlanProgress = () => {
             const completedDaysCount = updatedDays.filter(d => d.isCompleted).length;
             const totalDaysCount = updatedDays.length;
 
-            let status = WeekStatus.InProgress; // Default to InProgress (Unlocked)
+            let status = WeekStatus.InProgress;
 
             if (totalDaysCount > 0 && completedDaysCount === totalDaysCount) {
                 status = WeekStatus.Completed;
             }
-
-            // We explicitly do NOT set status to Locked per requirements.
 
             return {
                 ...week,
@@ -63,10 +49,50 @@ export const usePlanProgress = () => {
         });
     }, [completedDayIds]);
 
+    // Computed stats for StatsView and Header
+    const stats = useMemo(() => {
+        const allDays = plan.flatMap(w => w.days);
+        const totalDaysCount = allDays.length;
+        const completedDaysCount = allDays.filter(d => d.isCompleted).length;
+
+        // Current week: first week that is not fully completed
+        let currentWeek = 1;
+        for (let i = 0; i < plan.length; i++) {
+            const week = plan[i];
+            const weekCompleted = week.days.length > 0 &&
+                week.days.every(d => d.isCompleted);
+            if (!weekCompleted) {
+                currentWeek = i + 1;
+                break;
+            }
+            // If all weeks completed, stay on last week
+            if (i === plan.length - 1) {
+                currentWeek = plan.length;
+            }
+        }
+
+
+
+        const totalWeeks = plan.length;
+        const progressPercent = totalDaysCount > 0
+            ? Math.round((completedDaysCount / totalDaysCount) * 100)
+            : 0;
+
+        return {
+            currentWeek,
+            totalWeeks,
+            completedDaysCount,
+            totalDaysCount,
+
+            progressPercent
+        };
+    }, [plan]);
+
     return {
         plan,
         toggleDay,
         resetProgress,
-        completedDayIds
+        completedDayIds,
+        ...stats
     };
 };

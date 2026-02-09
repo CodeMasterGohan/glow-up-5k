@@ -94,9 +94,31 @@ const playSound = (type: 'start' | 'pause' | 'complete') => {
 };
 
 export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, onComplete }) => {
-  const [timeLeft, setTimeLeft] = useState(300); // Start with 5 min countdown for example
+  // Build segments array from workout steps or provide defaults
+  const segments = React.useMemo(() => {
+    if (workout.steps && workout.steps.length > 0) {
+      return workout.steps.map((step, index) => ({
+        id: index,
+        title: step.title,
+        description: step.description,
+        duration: step.duration ? parseDuration(step.duration) : 300 // default 5 min
+      }));
+    }
+    // Default segments if no steps defined
+    return [
+      { id: 0, title: 'Warm Up', description: 'Light jog and dynamic stretches', duration: 300 },
+      { id: 1, title: 'Main Workout', description: workout.subtitle || 'Complete the workout', duration: 600 },
+      { id: 2, title: 'Cool Down', description: 'Easy jog and stretching', duration: 300 }
+    ];
+  }, [workout]);
+
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(segments[0].duration);
   const [isActive, setIsActive] = useState(false);
-  const [currentSegment, setCurrentSegment] = useState('Warm Up');
+
+  const currentSegment = segments[currentSegmentIndex];
+  const nextSegment = segments[currentSegmentIndex + 1];
+  const totalDuration = segments.reduce((acc, s) => acc + s.duration, 0);
 
   useEffect(() => {
     let interval: number | undefined;
@@ -105,11 +127,16 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
-      setIsActive(false);
-      playSound('complete');
+      // Auto-advance to next segment
+      if (currentSegmentIndex < segments.length - 1) {
+        handleSkipNext();
+      } else {
+        setIsActive(false);
+        playSound('complete');
+      }
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft]);
+  }, [isActive, timeLeft, currentSegmentIndex, segments.length]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -122,6 +149,30 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
     setIsActive(nextState);
     playSound(nextState ? 'start' : 'pause');
   };
+
+  const handleSkipPrev = () => {
+    if (currentSegmentIndex > 0) {
+      const newIndex = currentSegmentIndex - 1;
+      setCurrentSegmentIndex(newIndex);
+      setTimeLeft(segments[newIndex].duration);
+      setIsActive(false);
+      playSound('pause');
+    }
+  };
+
+  const handleSkipNext = () => {
+    if (currentSegmentIndex < segments.length - 1) {
+      const newIndex = currentSegmentIndex + 1;
+      setCurrentSegmentIndex(newIndex);
+      setTimeLeft(segments[newIndex].duration);
+      playSound('start');
+    }
+  };
+
+  // Calculate progress through current segment
+  const segmentProgress = currentSegment.duration > 0
+    ? ((currentSegment.duration - timeLeft) / currentSegment.duration) * 100
+    : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white/95 backdrop-blur-xl animate-[fadeIn_0.3s_ease-out] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
@@ -138,10 +189,31 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
         <div className="w-10"></div>
       </div>
 
+      {/* Segment progress indicator */}
+      <div className="relative z-10 px-6 pb-2">
+        <div className="flex gap-1">
+          {segments.map((seg, idx) => (
+            <div
+              key={seg.id}
+              className={`h-1 flex-1 rounded-full transition-colors ${idx < currentSegmentIndex
+                  ? 'bg-primary'
+                  : idx === currentSegmentIndex
+                    ? 'bg-primary/50'
+                    : 'bg-slate-200'
+                }`}
+            />
+          ))}
+        </div>
+        <p className="text-center text-xs text-text-light mt-2">
+          Segment {currentSegmentIndex + 1} of {segments.length}
+        </p>
+      </div>
+
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-8 p-8">
         <div className="text-center">
           <h2 className="text-3xl font-display font-bold text-text-main mb-2">{workout.title}</h2>
-          <p className="text-lg text-primary-dark font-medium">{currentSegment}</p>
+          <p className="text-lg text-primary-dark font-medium">{currentSegment.title}</p>
+          <p className="text-sm text-text-light mt-1 max-w-xs mx-auto">{currentSegment.description}</p>
         </div>
 
         <div className="relative size-72 flex items-center justify-center">
@@ -154,7 +226,7 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
               r="45%"
               className="fill-none stroke-primary stroke-[12px] transition-all duration-1000"
               strokeDasharray="283%"
-              strokeDashoffset={`${283 - (283 * (300 - timeLeft) / 300)}%`}
+              strokeDashoffset={`${283 - (283 * segmentProgress / 100)}%`}
               strokeLinecap="round"
             />
           </svg>
@@ -167,7 +239,14 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
         </div>
 
         <div className="flex items-center gap-6">
-          <button className="size-14 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors">
+          <button
+            onClick={handleSkipPrev}
+            disabled={currentSegmentIndex === 0}
+            className={`size-14 rounded-full flex items-center justify-center transition-colors ${currentSegmentIndex === 0
+                ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+          >
             <span className="material-symbols-outlined">skip_previous</span>
           </button>
           <button
@@ -178,20 +257,36 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
               {isActive ? 'pause' : 'play_arrow'}
             </span>
           </button>
-          <button className="size-14 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors">
+          <button
+            onClick={handleSkipNext}
+            disabled={currentSegmentIndex >= segments.length - 1}
+            className={`size-14 rounded-full flex items-center justify-center transition-colors ${currentSegmentIndex >= segments.length - 1
+                ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              }`}
+          >
             <span className="material-symbols-outlined">skip_next</span>
           </button>
         </div>
       </div>
 
       <div className="relative z-10 p-6 pb-12">
-        <div className="bg-white rounded-2xl p-4 shadow-soft border border-slate-100">
-          <h4 className="font-bold text-text-main mb-2">Next Up:</h4>
-          <div className="flex items-center gap-3">
-            <div className="size-8 rounded-full bg-intensity-hard/10 text-intensity-hard flex items-center justify-center font-bold text-xs">2</div>
-            <p className="text-sm text-text-light flex-1">8 x 400m @ goal 5K pace w/ 90s jog recovery.</p>
+        {nextSegment ? (
+          <div className="bg-white rounded-2xl p-4 shadow-soft border border-slate-100">
+            <h4 className="font-bold text-text-main mb-2">Next Up:</h4>
+            <div className="flex items-center gap-3">
+              <div className="size-8 rounded-full bg-intensity-hard/10 text-intensity-hard flex items-center justify-center font-bold text-xs">
+                {currentSegmentIndex + 2}
+              </div>
+              <p className="text-sm text-text-light flex-1">{nextSegment.description}</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-green-50 rounded-2xl p-4 shadow-soft border border-green-100">
+            <h4 className="font-bold text-green-700 mb-1">Final Segment!</h4>
+            <p className="text-sm text-green-600">Complete this to finish your workout</p>
+          </div>
+        )}
 
         <div className="flex justify-center w-full mt-6">
           <button
@@ -209,3 +304,13 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
     </div>
   );
 };
+
+// Helper function to parse duration strings like "10 min", "45 mins", etc.
+function parseDuration(durationStr: string): number {
+  const match = durationStr.match(/(\d+)/);
+  if (match) {
+    const mins = parseInt(match[1], 10);
+    return mins * 60; // Convert to seconds
+  }
+  return 300; // Default 5 minutes
+}
