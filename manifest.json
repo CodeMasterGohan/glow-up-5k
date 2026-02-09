@@ -1,0 +1,21 @@
+{
+  "short_name": "GlowRun",
+  "name": "Glow Up 5K",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/192/running--v1.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://img.icons8.com/color/512/running--v1.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FFF5F7",
+  "background_color": "#FFF5F7",
+  "orientation": "portrait"
+}
