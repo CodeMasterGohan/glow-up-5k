@@ -3,26 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { WorkoutTimer } from './WorkoutTimer';
 import { DayPlan, DayType } from '../types';
 
-// Mock the audio context to avoid errors
-vi.stubGlobal('AudioContext', class {
-    createOscillator() {
-        return {
-            type: '',
-            frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), value: 0 },
-            connect: vi.fn(),
-            start: vi.fn(),
-            stop: vi.fn(),
-        };
-    }
-    createGain() {
-        return {
-            gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), value: 0 },
-            connect: vi.fn(),
-        };
-    }
-    destination = {};
-    currentTime = 0;
-});
 
 const mockWorkoutWithSteps: DayPlan = {
     id: 'w1-d2',

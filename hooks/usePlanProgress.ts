@@ -26,11 +26,25 @@ export const usePlanProgress = () => {
     };
 
     const plan = useMemo(() => {
+        let firstIncompleteFound = false;
+
         return planData.map(week => {
-            const updatedDays = week.days.map(day => ({
-                ...day,
-                isCompleted: completedDayIds.includes(day.id)
-            }));
+            const updatedDays = week.days.map(day => {
+                const isCompleted = completedDayIds.includes(day.id);
+                let isToday = false;
+
+                // The first incomplete day of the entire plan is considered "Today"
+                if (!isCompleted && !firstIncompleteFound) {
+                    isToday = true;
+                    firstIncompleteFound = true;
+                }
+
+                return {
+                    ...day,
+                    isCompleted,
+                    isToday
+                };
+            });
 
             const completedDaysCount = updatedDays.filter(d => d.isCompleted).length;
             const totalDaysCount = updatedDays.length;
