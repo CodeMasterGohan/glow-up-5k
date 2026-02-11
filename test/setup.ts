@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { beforeEach } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -82,7 +82,49 @@ Object.defineProperty(navigator, 'wakeLock', {
   writable: true,
 });
 
+// Mock SpeechSynthesis
+const speechSynthesisMock = {
+    speak: vi.fn(),
+    cancel: vi.fn(),
+    getVoices: () => [],
+    pause: vi.fn(),
+    resume: vi.fn(),
+    paused: false,
+    pending: false,
+    speaking: false,
+    onvoiceschanged: null,
+};
+
+Object.defineProperty(window, 'speechSynthesis', {
+    value: speechSynthesisMock,
+    writable: true,
+});
+
+class SpeechSynthesisUtteranceMock {
+    text: string;
+    lang: string;
+    pitch: number;
+    rate: number;
+    volume: number;
+    voice: SpeechSynthesisVoice | null;
+
+    constructor(text?: string) {
+        this.text = text || '';
+        this.lang = 'en-US';
+        this.pitch = 1;
+        this.rate = 1;
+        this.volume = 1;
+        this.voice = null;
+    }
+}
+
+Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+    value: SpeechSynthesisUtteranceMock,
+    writable: true,
+});
+
 // Reset localStorage before each test
 beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
 });

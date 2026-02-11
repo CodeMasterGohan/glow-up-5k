@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DayPlan } from '../types';
 import { useAudio } from '../hooks/useAudio';
 import { useWakeLock } from '../hooks/useWakeLock';
+import confetti from 'canvas-confetti';
 
 interface WorkoutTimerProps {
   workout: DayPlan;
@@ -10,7 +11,7 @@ interface WorkoutTimerProps {
 }
 
 export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, onComplete }) => {
-  const { playSound } = useAudio();
+  const { playSound, speak } = useAudio();
   const { requestWakeLock, releaseWakeLock } = useWakeLock();
 
   // Build segments array from workout steps or provide defaults
@@ -55,11 +56,51 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
       }
   }, [releaseWakeLock]);
 
+  const triggerCelebration = () => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+        // launch a few confetti from the left edge
+        confetti({
+            particleCount: 7,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#FF9AAE', '#B59AFF', '#FFCBA4'] // Primary, Secondary, Accent
+        });
+        // and launch a few from the right edge
+        confetti({
+            particleCount: 7,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#FF9AAE', '#B59AFF', '#FFCBA4']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    };
+    frame();
+  };
+
   useEffect(() => {
     let interval: number | undefined;
     if (isActive && timeLeft > 0) {
       interval = window.setInterval(() => {
         setTimeLeft((prev) => prev - 1);
+
+        // Voice cues for halfway and last minute (if segment > 2 mins)
+        if (timeLeft === Math.floor(currentSegment.duration / 2) && currentSegment.duration > 120) {
+            speak("Halfway there.");
+        }
+        if (timeLeft === 61 && currentSegment.duration > 120) {
+             speak("One minute remaining.");
+        }
+        if (timeLeft === 11) {
+             speak("Ten seconds.");
+        }
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
       // Auto-advance to next segment
@@ -68,10 +109,12 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
       } else {
         setIsActive(false);
         playSound('complete');
+        speak("Workout complete! Great job.");
+        triggerCelebration();
       }
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, currentSegmentIndex, segments.length, playSound]);
+  }, [isActive, timeLeft, currentSegmentIndex, segments.length, playSound, speak, currentSegment.duration]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -82,25 +125,41 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
   const toggleTimer = () => {
     const nextState = !isActive;
     setIsActive(nextState);
-    playSound(nextState ? 'start' : 'pause');
+    if (nextState) {
+        playSound('start');
+        // Only speak title if just starting the segment (e.g. paused and resumed)
+        if (timeLeft === currentSegment.duration) {
+            speak(`Starting ${currentSegment.title}. ${currentSegment.description}`);
+        } else {
+            speak("Resuming workout.");
+        }
+    } else {
+        playSound('pause');
+        speak("Workout paused.");
+    }
   };
 
   const handleSkipPrev = () => {
     if (currentSegmentIndex > 0) {
       const newIndex = currentSegmentIndex - 1;
+      const newSegment = segments[newIndex];
       setCurrentSegmentIndex(newIndex);
-      setTimeLeft(segments[newIndex].duration);
+      setTimeLeft(newSegment.duration);
       setIsActive(false);
       playSound('pause');
+      speak(`Back to ${newSegment.title}.`);
     }
   };
 
   const handleSkipNext = () => {
     if (currentSegmentIndex < segments.length - 1) {
       const newIndex = currentSegmentIndex + 1;
+      const newSegment = segments[newIndex];
       setCurrentSegmentIndex(newIndex);
-      setTimeLeft(segments[newIndex].duration);
+      setTimeLeft(newSegment.duration);
       playSound('start');
+      speak(`Next up: ${newSegment.title}. ${newSegment.description}`);
+      setIsActive(true);
     }
   };
 
@@ -227,6 +286,8 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
           <button
             onClick={() => {
               playSound('complete');
+              speak("Workout complete! Congratulations.");
+              triggerCelebration();
               if (onComplete) onComplete();
             }}
             className="w-full py-4 rounded-xl bg-green-500 text-white font-bold shadow-lg shadow-green-200 hover:bg-green-600 transition-all active:scale-95 flex items-center justify-center gap-2"

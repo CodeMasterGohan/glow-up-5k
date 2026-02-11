@@ -102,6 +102,23 @@ export const useAudio = () => {
         }
     }, [initAudio]);
 
+    const speak = useCallback((text: string) => {
+        if ('speechSynthesis' in window) {
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            // Try to use a native voice if possible
+            // const voices = window.speechSynthesis.getVoices();
+            // const preferredVoice = voices.find(v => v.lang.startsWith('en-US'));
+            // if (preferredVoice) utterance.voice = preferredVoice;
+
+            window.speechSynthesis.speak(utterance);
+        }
+    }, []);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
@@ -109,8 +126,11 @@ export const useAudio = () => {
                 audioContextRef.current.close().catch(console.error);
                 audioContextRef.current = null;
             }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
         };
     }, []);
 
-    return { playSound };
+    return { playSound, speak };
 };
