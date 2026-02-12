@@ -13,11 +13,18 @@ export enum DayType {
   Rest = 'Rest'
 }
 
+export interface IntervalDetails {
+  sets: number;
+  workDuration: number;
+  recoveryDuration: number;
+}
+
 export interface WorkoutStep {
   type: 'warmup' | 'main' | 'cooldown';
   title: string;
   description: string;
   duration?: string;
+  intervals?: IntervalDetails;
 }
 
 export interface DayPlan {

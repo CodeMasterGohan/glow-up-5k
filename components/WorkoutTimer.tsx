@@ -17,12 +17,35 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
   // Build segments array from workout steps or provide defaults
   const segments = React.useMemo(() => {
     if (workout.steps && workout.steps.length > 0) {
-      return workout.steps.map((step, index) => ({
-        id: index,
-        title: step.title,
-        description: step.description,
-        duration: step.duration ? parseDuration(step.duration) : 300 // default 5 min
-      }));
+      return workout.steps.flatMap((step, index) => {
+        if (step.intervals) {
+           const intervalSegments = [];
+           for(let i = 0; i < step.intervals.sets; i++) {
+             intervalSegments.push({
+               id: `${index}-work-${i}`,
+               title: `${step.title} (Rep ${i+1}/${step.intervals.sets})`,
+               description: step.description,
+               duration: step.intervals.workDuration
+             });
+             // Add recovery segment if not the last rep, or if recovery is short enough to be part of the set logic
+             // Standard interval training usually includes recovery after each rep, even the last one before cooldown.
+             intervalSegments.push({
+                id: `${index}-rest-${i}`,
+                title: `${step.title} (Rest ${i+1}/${step.intervals.sets})`,
+                description: 'Recover',
+                duration: step.intervals.recoveryDuration
+             });
+           }
+           return intervalSegments;
+        }
+
+        return {
+          id: index,
+          title: step.title,
+          description: step.description,
+          duration: step.duration ? parseDuration(step.duration) : 300 // default 5 min
+        };
+      });
     }
     // Default segments if no steps defined
     return [
@@ -303,10 +326,28 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
 
 // Helper function to parse duration strings like "10 min", "45 mins", etc.
 function parseDuration(durationStr: string): number {
-  const match = durationStr.match(/(\d+)/);
-  if (match) {
-    const mins = parseInt(match[1], 10);
-    return mins * 60; // Convert to seconds
+  if (!durationStr) return 300;
+
+  const minMatch = durationStr.match(/(\d+)\s*(?:min|mins|minute|minutes)/i);
+  if (minMatch) {
+    const mins = parseInt(minMatch[1], 10);
+    return mins * 60;
   }
+
+  const secMatch = durationStr.match(/(\d+)\s*(?:sec|secs|second|seconds)/i);
+  if (secMatch) {
+    const secs = parseInt(secMatch[1], 10);
+    return secs;
+  }
+
+  // Fallback for simple numbers assuming minutes if context implies, but safer to assume 5 min default if unclear
+  // Or check just number
+  const numMatch = durationStr.match(/(\d+)/);
+  if (numMatch) {
+      // If it's just a number, original code assumed minutes. Let's keep that but careful.
+      const val = parseInt(numMatch[1], 10);
+      return val * 60;
+  }
+
   return 300; // Default 5 minutes
 }
