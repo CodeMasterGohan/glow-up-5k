@@ -15,7 +15,10 @@ export const planData: WeekPlan[] = [
         subtitle: '30 mins • RPE 3-4',
         details: 'Purpose: Aerobic base building.\nIntensity: RPE 3-4 (Conversational pace).',
         duration: '30 mins',
-        isCompleted: false
+        isCompleted: false,
+        steps: [
+          { type: 'main', title: 'Easy Run', description: '30 mins easy run (RPE 3-4).', duration: '30 mins' }
+        ]
       },
       {
         id: 'w1-d2',
@@ -26,9 +29,14 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Improve VO2 max and running economy.\nIntensity: RPE 8-9 (Hard, roughly 10-15 sec/mile faster than goal 5K pace).',
         duration: '45 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up jog.' },
-          { type: 'main', title: 'Main Set', description: '8 x 400m (or 2 mins) hard, with 90 seconds standing rest between each.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down jog.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up jog.', duration: '10 mins' },
+          {
+            type: 'main',
+            title: 'Main Set',
+            description: '8 x 400m (or 2 mins) hard, with 90 seconds standing rest between each.',
+            intervals: { sets: 8, workDuration: 120, recoveryDuration: 90 }
+          },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down jog.', duration: '10 mins' }
         ]
       },
       {
@@ -39,8 +47,8 @@ export const planData: WeekPlan[] = [
         subtitle: 'Bike + Strength',
         details: 'Purpose: Build power and active recovery.',
         steps: [
-          { type: 'main', title: 'Bike', description: '30 mins steady state (RPE 4).' },
-          { type: 'main', title: 'Strength', description: '3 sets of 10-12: Goblet Squats, Walking Lunges, Dumbbell Deadlifts, Plank (45 sec).' }
+          { type: 'main', title: 'Bike', description: '30 mins steady state (RPE 4).', duration: '30 mins' },
+          { type: 'main', title: 'Strength', description: '3 sets of 10-12: Goblet Squats, Walking Lunges, Dumbbell Deadlifts, Plank (45 sec).', duration: '20 mins' }
         ]
       },
       {
@@ -52,9 +60,9 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Increase lactate threshold.\nIntensity: RPE 6-7 (Sustainable discomfort).',
         duration: '40 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.' },
-          { type: 'main', title: 'Tempo', description: '20 minutes at "comfortably hard" pace.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.', duration: '10 mins' },
+          { type: 'main', title: 'Tempo', description: '20 minutes at "comfortably hard" pace.', duration: '20 mins' },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -63,7 +71,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest,
         title: 'Rest Day',
         subtitle: 'Full Recovery',
-        details: 'Purpose: Full physiological recovery.'
+        details: 'Purpose: Full physiological recovery.',
+        steps: [] // No steps for rest day usually, handled by UI differently or just completed
       },
       {
         id: 'w1-d6',
@@ -72,7 +81,10 @@ export const planData: WeekPlan[] = [
         title: 'Long Run',
         subtitle: '4-5 miles • RPE 3-4',
         details: 'Purpose: Endurance.\nIntensity: RPE 3-4 (Keep it slow).',
-        duration: '45-50 mins'
+        duration: '45-50 mins',
+        steps: [
+           { type: 'main', title: 'Long Run', description: '45-50 mins easy run.', duration: '45 mins' }
+        ]
       },
       {
         id: 'w1-d7',
@@ -80,7 +92,10 @@ export const planData: WeekPlan[] = [
         type: DayType.CrossTraining,
         title: 'Active Recovery',
         subtitle: '30 min Bike/Walk',
-        details: 'Purpose: Blood flow without impact.\n30 min stationary bike (very light resistance) or gentle walk.'
+        details: 'Purpose: Blood flow without impact.\n30 min stationary bike (very light resistance) or gentle walk.',
+        steps: [
+            { type: 'main', title: 'Active Recovery', description: '30 min light activity.', duration: '30 mins' }
+        ]
       }
     ]
   },
@@ -99,8 +114,8 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Recovery form weekend/aerobic maintenance.\nIntensity: RPE 3-4.',
         duration: '40 mins',
         steps: [
-          { type: 'main', title: 'Run', description: '35 minutes running.' },
-          { type: 'main', title: 'Strides', description: '4 x 20-second "strides" (accelerations) at the end.' }
+          { type: 'main', title: 'Run', description: '35 minutes running.', duration: '35 mins' },
+          { type: 'main', title: 'Strides', description: '4 x 20-second "strides" (accelerations) at the end.', duration: '5 mins' }
         ]
       },
       {
@@ -112,9 +127,14 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Speed endurance.\nIntensity: RPE 8 (Goal 5K pace).',
         duration: '45 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.' },
-          { type: 'main', title: 'Main Set', description: '5 x 800m (or 4 mins) hard, with 2 mins jog recovery.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.', duration: '10 mins' },
+          {
+              type: 'main',
+              title: 'Main Set',
+              description: '5 x 800m (or 4 mins) hard, with 2 mins jog recovery.',
+              intervals: { sets: 5, workDuration: 240, recoveryDuration: 120 }
+          },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -125,8 +145,8 @@ export const planData: WeekPlan[] = [
         subtitle: 'Bike + Heavier Strength',
         details: 'Purpose: Muscular endurance.',
         steps: [
-          { type: 'main', title: 'Bike', description: '40 mins steady state (RPE 5).' },
-          { type: 'main', title: 'Strength', description: '3 sets of 8-10: Split Squats, Single-Leg RDLs, Calf Raises, Russian Twists.' }
+          { type: 'main', title: 'Bike', description: '40 mins steady state (RPE 5).', duration: '40 mins' },
+          { type: 'main', title: 'Strength', description: '3 sets of 8-10: Split Squats, Single-Leg RDLs, Calf Raises, Russian Twists.', duration: '20 mins' }
         ]
       },
       {
@@ -138,9 +158,9 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Threshold maintenance.\nIntensity: RPE 7.',
         duration: '45 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.' },
-          { type: 'main', title: 'Tempo', description: '25 minutes continuous tempo.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.', duration: '10 mins' },
+          { type: 'main', title: 'Tempo', description: '25 minutes continuous tempo.', duration: '25 mins' },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -149,7 +169,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest,
         title: 'Rest Day',
         subtitle: 'Recovery',
-        details: 'Purpose: Recovery.'
+        details: 'Purpose: Recovery.',
+        steps: []
       },
       {
         id: 'w2-d6',
@@ -157,7 +178,10 @@ export const planData: WeekPlan[] = [
         type: DayType.LongRun,
         title: 'Long Run',
         subtitle: '5-6 miles • RPE 3-4',
-        details: 'Purpose: Endurance.\nIntensity: RPE 3-4.'
+        details: 'Purpose: Endurance.\nIntensity: RPE 3-4.',
+        steps: [
+            { type: 'main', title: 'Long Run', description: '5-6 miles easy run.', duration: '50 mins' }
+        ]
       },
       {
         id: 'w2-d7',
@@ -165,7 +189,10 @@ export const planData: WeekPlan[] = [
         type: DayType.CrossTraining,
         title: 'Active Recovery',
         subtitle: '30-45 min Bike/Walk',
-        details: 'Purpose: Flush legs.\n30-45 min bike or brisk walk.'
+        details: 'Purpose: Flush legs.\n30-45 min bike or brisk walk.',
+        steps: [
+            { type: 'main', title: 'Active Recovery', description: '30-45 min easy activity.', duration: '30 mins' }
+        ]
       }
     ]
   },
@@ -182,7 +209,10 @@ export const planData: WeekPlan[] = [
         title: 'Easy Run',
         subtitle: '40 mins • RPE 3-4',
         details: 'Purpose: Aerobic base.\nIntensity: RPE 3-4.',
-        duration: '40 mins'
+        duration: '40 mins',
+        steps: [
+            { type: 'main', title: 'Easy Run', description: '40 mins easy run.', duration: '40 mins' }
+        ]
       },
       {
         id: 'w3-d2',
@@ -193,9 +223,14 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Sharpening speed and leg turnover.\nIntensity: RPE 9 (Faster than goal 5K pace).',
         duration: '50-60 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '15 min warm-up.' },
-          { type: 'main', title: 'Main Set', description: '12 x 200m (or 45-60 secs) very hard, with 200m slow jog recovery.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '15 min warm-up.', duration: '15 mins' },
+          {
+              type: 'main',
+              title: 'Main Set',
+              description: '12 x 200m (or 45-60 secs) very hard, with 200m slow jog recovery.',
+              intervals: { sets: 12, workDuration: 60, recoveryDuration: 90 } // Assuming 90s jog
+          },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -206,8 +241,8 @@ export const planData: WeekPlan[] = [
         subtitle: 'Bike Sprints + Strength',
         details: 'Purpose: Maintenance without impact.',
         steps: [
-          { type: 'main', title: 'Bike', description: '45 mins (include 5 x 1-min hard sprints).' },
-          { type: 'main', title: 'Strength', description: '3 sets of 10: Squats, Lateral Lunges, Glute Bridges (weighted), Plank to Push-up.' }
+          { type: 'main', title: 'Bike', description: '45 mins (include 5 x 1-min hard sprints).', duration: '45 mins' },
+          { type: 'main', title: 'Strength', description: '3 sets of 10: Squats, Lateral Lunges, Glute Bridges (weighted), Plank to Push-up.', duration: '20 mins' }
         ]
       },
       {
@@ -219,9 +254,14 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Mental toughness and lactate clearance.\nIntensity: RPE 7-8.',
         duration: '50 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.' },
-          { type: 'main', title: 'Threshold', description: '3 x 10 minutes at Tempo pace with 2 min jog recovery between reps.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.', duration: '10 mins' },
+          {
+              type: 'main',
+              title: 'Threshold',
+              description: '3 x 10 minutes at Tempo pace with 2 min jog recovery between reps.',
+              intervals: { sets: 3, workDuration: 600, recoveryDuration: 120 }
+          },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -230,7 +270,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest,
         title: 'Rest Day',
         subtitle: 'Critical Recovery',
-        details: 'Purpose: Critical recovery before long run.'
+        details: 'Purpose: Critical recovery before long run.',
+        steps: []
       },
       {
         id: 'w3-d6',
@@ -238,7 +279,10 @@ export const planData: WeekPlan[] = [
         type: DayType.LongRun,
         title: 'Long Run',
         subtitle: '6-7 miles • RPE 4',
-        details: 'Purpose: Max endurance stimulus.\nIntensity: RPE 4 (Last mile can be at goal race pace if feeling good).'
+        details: 'Purpose: Max endurance stimulus.\nIntensity: RPE 4 (Last mile can be at goal race pace if feeling good).',
+        steps: [
+            { type: 'main', title: 'Long Run', description: '6-7 miles run.', duration: '60 mins' }
+        ]
       },
       {
         id: 'w3-d7',
@@ -246,7 +290,10 @@ export const planData: WeekPlan[] = [
         type: DayType.CrossTraining,
         title: 'Active Recovery',
         subtitle: '30 min Bike/Roll',
-        details: 'Purpose: Relax muscles.\n30 min bike or stretching/foam rolling.'
+        details: 'Purpose: Relax muscles.\n30 min bike or stretching/foam rolling.',
+        steps: [
+            { type: 'main', title: 'Active Recovery', description: '30 min easy activity.', duration: '30 mins' }
+        ]
       }
     ]
   },
@@ -263,7 +310,10 @@ export const planData: WeekPlan[] = [
         title: 'Easy Run',
         subtitle: '30 mins • RPE 3',
         details: 'Purpose: Recovery.\nIntensity: RPE 3.',
-        duration: '30 mins'
+        duration: '30 mins',
+        steps: [
+            { type: 'main', title: 'Easy Run', description: '30 mins easy run.', duration: '30 mins' }
+        ]
       },
       {
         id: 'w4-d2',
@@ -274,9 +324,14 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Confidence building at race pace.\nIntensity: RPE 8-9.',
         duration: '50-60 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.' },
-          { type: 'main', title: 'Main Set', description: '3 x 1 Mile (1600m) at Goal 5K Pace with 3 mins rest.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.', duration: '10 mins' },
+          {
+              type: 'main',
+              title: 'Main Set',
+              description: '3 x 1 Mile (1600m) at Goal 5K Pace with 3 mins rest.',
+              intervals: { sets: 3, workDuration: 480, recoveryDuration: 180 } // Assuming ~8 min mile pace for calculation base
+          },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -287,8 +342,8 @@ export const planData: WeekPlan[] = [
         subtitle: 'Easy Bike + Maint. Weights',
         details: 'Purpose: Reduce load.',
         steps: [
-          { type: 'main', title: 'Bike', description: '30 mins easy spinning.' },
-          { type: 'main', title: 'Strength', description: '2 sets only: Maintenance weights. Focus on form. Core work emphasis.' }
+          { type: 'main', title: 'Bike', description: '30 mins easy spinning.', duration: '30 mins' },
+          { type: 'main', title: 'Strength', description: '2 sets only: Maintenance weights. Focus on form. Core work emphasis.', duration: '20 mins' }
         ]
       },
       {
@@ -300,7 +355,7 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Variable heart rate training.\nIntensity: Hard segments at RPE 7-8.',
         duration: '30 mins',
         steps: [
-          { type: 'main', title: 'Run', description: '30 min run total. During the middle, alternate 2 mins hard / 1 min easy for 15 mins.' }
+          { type: 'main', title: 'Run', description: '30 min run total. During the middle, alternate 2 mins hard / 1 min easy for 15 mins.', duration: '30 mins' }
         ]
       },
       {
@@ -309,7 +364,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest,
         title: 'Rest Day',
         subtitle: 'Recovery',
-        details: 'Purpose: Recovery.'
+        details: 'Purpose: Recovery.',
+        steps: []
       },
       {
         id: 'w4-d6',
@@ -317,7 +373,10 @@ export const planData: WeekPlan[] = [
         type: DayType.LongRun,
         title: 'Moderate Long Run',
         subtitle: '4-5 miles • RPE 3',
-        details: 'Purpose: Aerobic maintenance.\nIntensity: RPE 3.'
+        details: 'Purpose: Aerobic maintenance.\nIntensity: RPE 3.',
+        steps: [
+            { type: 'main', title: 'Long Run', description: '4-5 miles easy run.', duration: '40 mins' }
+        ]
       },
       {
         id: 'w4-d7',
@@ -325,7 +384,10 @@ export const planData: WeekPlan[] = [
         type: DayType.CrossTraining,
         title: 'Active Recovery',
         subtitle: '20 min Bike/Walk',
-        details: 'Purpose: Rest.\n20 min easy bike or walk.'
+        details: 'Purpose: Rest.\n20 min easy bike or walk.',
+        steps: [
+            { type: 'main', title: 'Active Recovery', description: '20 min easy activity.', duration: '20 mins' }
+        ]
       }
     ]
   },
@@ -341,7 +403,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest,
         title: 'Rest or Shakeout',
         subtitle: 'Optional 20 min jog',
-        details: 'Purpose: Full rest.\nOptional 20 min easy jog or complete rest.'
+        details: 'Purpose: Full rest.\nOptional 20 min easy jog or complete rest.',
+        steps: []
       },
       {
         id: 'w5-d2',
@@ -352,9 +415,14 @@ export const planData: WeekPlan[] = [
         details: 'Purpose: Neuromuscular priming.\nIntensity: RPE 8 (Feel fast and smooth).',
         duration: '35 mins',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.' },
-          { type: 'main', title: 'Main Set', description: '4 x 400m at goal race pace with full 3 min rest.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.' }
+          { type: 'warmup', title: 'Warm-up', description: '10 min warm-up.', duration: '10 mins' },
+          {
+              type: 'main',
+              title: 'Main Set',
+              description: '4 x 400m at goal race pace with full 3 min rest.',
+              intervals: { sets: 4, workDuration: 90, recoveryDuration: 180 }
+          },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min cool-down.', duration: '10 mins' }
         ]
       },
       {
@@ -363,7 +431,10 @@ export const planData: WeekPlan[] = [
         type: DayType.CrossTraining,
         title: 'Mobility / Light Bike',
         subtitle: '20 mins spinning',
-        details: 'Purpose: Blood flow.\n20 mins easy spinning. No weights this week.'
+        details: 'Purpose: Blood flow.\n20 mins easy spinning. No weights this week.',
+        steps: [
+            { type: 'main', title: 'Mobility', description: '20 mins light bike.', duration: '20 mins' }
+        ]
       },
       {
         id: 'w5-d4',
@@ -371,7 +442,11 @@ export const planData: WeekPlan[] = [
         type: DayType.EasyRun,
         title: 'Easy Run + Strides',
         subtitle: '20 mins + 4 Strides',
-        details: 'Purpose: Keep systems online.\nIntensity: RPE 3 for run, RPE 8 for strides.'
+        details: 'Purpose: Keep systems online.\nIntensity: RPE 3 for run, RPE 8 for strides.',
+        steps: [
+            { type: 'main', title: 'Run', description: '20 mins easy run.', duration: '20 mins' },
+            { type: 'main', title: 'Strides', description: '4 x strides.', duration: '5 mins' }
+        ]
       },
       {
         id: 'w5-d5',
@@ -379,7 +454,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest,
         title: 'Rest Day',
         subtitle: 'Hydrate well',
-        details: 'Purpose: Race prep. Complete rest.'
+        details: 'Purpose: Race prep. Complete rest.',
+        steps: []
       },
       {
         id: 'w5-d6',
@@ -387,7 +463,8 @@ export const planData: WeekPlan[] = [
         type: DayType.Rest, // Using Rest type as placeholder if user hasn't selected Sat vs Sun
         title: 'Pre-Race / Race Day',
         subtitle: 'See Sunday',
-        details: 'If race is Sunday, rest today. If race is today, Good Luck!'
+        details: 'If race is Sunday, rest today. If race is today, Good Luck!',
+        steps: []
       },
       {
         id: 'w5-d7',
@@ -397,9 +474,9 @@ export const planData: WeekPlan[] = [
         subtitle: '5K PR Attempt',
         details: 'Purpose: PR Attempt.\nStart controlled, push middle, empty tank at end.',
         steps: [
-          { type: 'warmup', title: 'Warm-up', description: '10-15 min very slow jog. Drills: High knees, butt kicks, 2-3 short accelerations.' },
-          { type: 'main', title: 'Race', description: '5K Race.' },
-          { type: 'cooldown', title: 'Cool-down', description: '10 min walk/jog.' }
+          { type: 'warmup', title: 'Warm-up', description: '10-15 min very slow jog. Drills: High knees, butt kicks, 2-3 short accelerations.', duration: '15 mins' },
+          { type: 'main', title: 'Race', description: '5K Race.', duration: '25 mins' },
+          { type: 'cooldown', title: 'Cool-down', description: '10 min walk/jog.', duration: '10 mins' }
         ]
       }
     ]
