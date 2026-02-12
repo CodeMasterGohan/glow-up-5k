@@ -65,6 +65,24 @@ const mockWorkoutNoDuration: DayPlan = {
     ]
 };
 
+const mockWorkoutInferredFromText: DayPlan = {
+    id: 'w1-custom',
+    dayNumber: 1,
+    type: DayType.EasyRun,
+    title: 'Custom Day 1',
+    subtitle: 'Workout from notes',
+    details: 'Five minute warmup and then a 30 minute run.',
+};
+
+const mockWorkoutDurationOnly: DayPlan = {
+    id: 'w1-duration',
+    dayNumber: 1,
+    type: DayType.EasyRun,
+    title: 'Duration Only',
+    subtitle: 'Simple run',
+    duration: '35 mins',
+};
+
 describe('WorkoutTimer', () => {
     describe('Segment Parsing & Duration', () => {
         it('parses "10 mins" correctly to 600 seconds', () => {
@@ -76,6 +94,24 @@ describe('WorkoutTimer', () => {
         it('defaults to 5 mins (300s) if no duration provided', () => {
             render(<WorkoutTimer workout={mockWorkoutNoDuration} onClose={vi.fn()} />);
             expect(screen.getByText('5:00')).toBeInTheDocument();
+        });
+
+        it('infers warmup + run segments from workout text when steps are missing', () => {
+            render(<WorkoutTimer workout={mockWorkoutInferredFromText} onClose={vi.fn()} />);
+
+            expect(screen.getByText('Warm-up')).toBeInTheDocument();
+            expect(screen.getByText('5:00')).toBeInTheDocument();
+
+            const nextBtn = screen.getByText('skip_next').closest('button');
+            fireEvent.click(nextBtn!);
+
+            expect(screen.getByText('Run')).toBeInTheDocument();
+            expect(screen.getByText('30:00')).toBeInTheDocument();
+        });
+
+        it('uses workout duration when steps are missing and no timed segments are in details', () => {
+            render(<WorkoutTimer workout={mockWorkoutDurationOnly} onClose={vi.fn()} />);
+            expect(screen.getByText('35:00')).toBeInTheDocument();
         });
 
         it('handles intervals by creating work/rest segments', () => {
