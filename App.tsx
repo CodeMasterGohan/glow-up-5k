@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Layout } from './components/Layout';
-import { PlanView } from './views/PlanView';
-import { StatsView } from './views/StatsView';
-import { RacesView } from './views/RacesView';
+
+// Lazy load views for code splitting
+const PlanView = lazy(() => import('./views/PlanView').then(module => ({ default: module.PlanView })));
+const StatsView = lazy(() => import('./views/StatsView').then(module => ({ default: module.StatsView })));
+const RacesView = lazy(() => import('./views/RacesView').then(module => ({ default: module.RacesView })));
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('plan');
@@ -18,7 +20,15 @@ const App: React.FC = () => {
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderContent()}
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-full min-h-[50vh] w-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <div key={activeTab} className="animate-[fadeIn_0.3s_ease-out]">
+            {renderContent()}
+        </div>
+      </Suspense>
     </Layout>
   );
 };

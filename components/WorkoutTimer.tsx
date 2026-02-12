@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { DayPlan } from '../types';
+import { DayPlan, WorkoutStep } from '../types';
+import { useAudio } from '../hooks/useAudio';
+import { useWakeLock } from '../hooks/useWakeLock';
+import confetti from 'canvas-confetti';
 
 interface WorkoutTimerProps {
   workout: DayPlan;
@@ -7,113 +10,23 @@ interface WorkoutTimerProps {
   onComplete?: () => void;
 }
 
-// ... playSound function remains same (omitted for brevity in replacement if possible, but replace_file_content needs context.
-// actually I'm replacing the whole file content or a large chunk? 
-// No, I should use replace_file_content safely. 
-// Let's target the interface and the Main Component return. Use MultiReplace? No, Replace is fine if I do chunks or just the specific parts.
-// But I need to add onComplete to destracturing too.
-// Let's use MultiReplace for safety.
+interface TimerSegment {
+  id: string | number;
+  title: string;
+  description: string;
+  duration: number;
+}
 
-
-// Simple audio synthesizer for gentle UI sounds
-const playSound = (type: 'start' | 'pause' | 'complete') => {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-
-    const ctx = new AudioContext();
-
-    // Master gain for volume control
-    const masterGain = ctx.createGain();
-    masterGain.connect(ctx.destination);
-    masterGain.gain.value = 0.2; // Keep it very gentle
-
-    const now = ctx.currentTime;
-
-    if (type === 'start') {
-      // Soft rising major third (C5 -> E5) indicating progress
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.15); // E5
-
-      const gain = ctx.createGain();
-      gain.connect(masterGain);
-
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
-      osc.connect(gain);
-      osc.start(now);
-      osc.stop(now + 0.5);
-    }
-    else if (type === 'pause') {
-      // Soft falling (E5 -> C5) indicating pause
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(659.25, now); // E5
-      osc.frequency.exponentialRampToValueAtTime(523.25, now + 0.15); // C5
-
-      const gain = ctx.createGain();
-      gain.connect(masterGain);
-
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
-      osc.connect(gain);
-      osc.start(now);
-      osc.stop(now + 0.5);
-    }
-    else if (type === 'complete') {
-      // Soft success chord (C Major Arpeggio: C5, E5, G5, C6)
-      const notes = [523.25, 659.25, 783.99, 1046.50];
-      notes.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-
-        const gain = ctx.createGain();
-        gain.connect(masterGain);
-
-        const startTime = now + (i * 0.12); // Staggered entrance
-
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.2);
-
-        osc.connect(gain);
-        osc.start(startTime);
-        osc.stop(startTime + 1.3);
-      });
-    }
-  } catch (e) {
-    console.error("Audio play failed", e);
-  }
-};
+const DEFAULT_SEGMENT_DURATION = 300;
 
 export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, onComplete }) => {
-  // Build segments array from workout steps or provide defaults
-  const segments = React.useMemo(() => {
-    if (workout.steps && workout.steps.length > 0) {
-      return workout.steps.map((step, index) => ({
-        id: index,
-        title: step.title,
-        description: step.description,
-        duration: step.duration ? parseDuration(step.duration) : 300 // default 5 min
-      }));
-    }
-    // Default segments if no steps defined
-    return [
-      { id: 0, title: 'Warm Up', description: 'Light jog and dynamic stretches', duration: 300 },
-      { id: 1, title: 'Main Workout', description: workout.subtitle || 'Complete the workout', duration: 600 },
-      { id: 2, title: 'Cool Down', description: 'Easy jog and stretching', duration: 300 }
-    ];
-  }, [workout]);
+  const { playSound, speak } = useAudio();
+  const { requestWakeLock, releaseWakeLock } = useWakeLock();
+
+  const segments = React.useMemo(() => buildWorkoutSegments(workout), [workout]);
 
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(segments[0].duration);
+  const [timeLeft, setTimeLeft] = useState(segments[0]?.duration ?? DEFAULT_SEGMENT_DURATION);
   const [isActive, setIsActive] = useState(false);
 
   const currentSegment = segments[currentSegmentIndex];
@@ -121,10 +34,72 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
   const totalDuration = segments.reduce((acc, s) => acc + s.duration, 0);
 
   useEffect(() => {
+    setCurrentSegmentIndex(0);
+    setTimeLeft(segments[0]?.duration ?? DEFAULT_SEGMENT_DURATION);
+    setIsActive(false);
+  }, [segments]);
+
+  // Handle Wake Lock based on activity
+  useEffect(() => {
+    if (isActive) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+  }, [isActive, requestWakeLock, releaseWakeLock]);
+
+  // Also release on unmount explicitly just in case (hook does it too)
+  useEffect(() => {
+      return () => {
+          releaseWakeLock();
+      }
+  }, [releaseWakeLock]);
+
+  const triggerCelebration = () => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+        // launch a few confetti from the left edge
+        confetti({
+            particleCount: 7,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#FF9AAE', '#B59AFF', '#FFCBA4'] // Primary, Secondary, Accent
+        });
+        // and launch a few from the right edge
+        confetti({
+            particleCount: 7,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#FF9AAE', '#B59AFF', '#FFCBA4']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    };
+    frame();
+  };
+
+  useEffect(() => {
     let interval: number | undefined;
     if (isActive && timeLeft > 0) {
       interval = window.setInterval(() => {
         setTimeLeft((prev) => prev - 1);
+
+        // Voice cues for halfway and last minute (if segment > 2 mins)
+        if (timeLeft === Math.floor(currentSegment.duration / 2) && currentSegment.duration > 120) {
+            speak("Halfway there.");
+        }
+        if (timeLeft === 61 && currentSegment.duration > 120) {
+             speak("One minute remaining.");
+        }
+        if (timeLeft === 11) {
+             speak("Ten seconds.");
+        }
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
       // Auto-advance to next segment
@@ -133,10 +108,12 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
       } else {
         setIsActive(false);
         playSound('complete');
+        speak("Workout complete! Great job.");
+        triggerCelebration();
       }
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft, currentSegmentIndex, segments.length]);
+  }, [isActive, timeLeft, currentSegmentIndex, segments.length, playSound, speak, currentSegment.duration]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -147,25 +124,41 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
   const toggleTimer = () => {
     const nextState = !isActive;
     setIsActive(nextState);
-    playSound(nextState ? 'start' : 'pause');
+    if (nextState) {
+        playSound('start');
+        // Only speak title if just starting the segment (e.g. paused and resumed)
+        if (timeLeft === currentSegment.duration) {
+            speak(`Starting ${currentSegment.title}. ${currentSegment.description}`);
+        } else {
+            speak("Resuming workout.");
+        }
+    } else {
+        playSound('pause');
+        speak("Workout paused.");
+    }
   };
 
   const handleSkipPrev = () => {
     if (currentSegmentIndex > 0) {
       const newIndex = currentSegmentIndex - 1;
+      const newSegment = segments[newIndex];
       setCurrentSegmentIndex(newIndex);
-      setTimeLeft(segments[newIndex].duration);
+      setTimeLeft(newSegment.duration);
       setIsActive(false);
       playSound('pause');
+      speak(`Back to ${newSegment.title}.`);
     }
   };
 
   const handleSkipNext = () => {
     if (currentSegmentIndex < segments.length - 1) {
       const newIndex = currentSegmentIndex + 1;
+      const newSegment = segments[newIndex];
       setCurrentSegmentIndex(newIndex);
-      setTimeLeft(segments[newIndex].duration);
+      setTimeLeft(newSegment.duration);
       playSound('start');
+      speak(`Next up: ${newSegment.title}. ${newSegment.description}`);
+      setIsActive(true);
     }
   };
 
@@ -292,6 +285,8 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
           <button
             onClick={() => {
               playSound('complete');
+              speak("Workout complete! Congratulations.");
+              triggerCelebration();
               if (onComplete) onComplete();
             }}
             className="w-full py-4 rounded-xl bg-green-500 text-white font-bold shadow-lg shadow-green-200 hover:bg-green-600 transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -307,10 +302,234 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({ workout, onClose, on
 
 // Helper function to parse duration strings like "10 min", "45 mins", etc.
 function parseDuration(durationStr: string): number {
-  const match = durationStr.match(/(\d+)/);
-  if (match) {
-    const mins = parseInt(match[1], 10);
-    return mins * 60; // Convert to seconds
+  if (!durationStr) return DEFAULT_SEGMENT_DURATION;
+
+  const values = extractDurationValuesInSeconds(durationStr);
+  if (values.length > 0) {
+    return values.reduce((sum, value) => sum + value, 0);
   }
-  return 300; // Default 5 minutes
+
+  return DEFAULT_SEGMENT_DURATION;
+}
+
+function buildWorkoutSegments(workout: DayPlan): TimerSegment[] {
+  const stepSegments = (workout.steps ?? []).flatMap((step, index) =>
+    buildSegmentsFromStep(step, index)
+  );
+  if (stepSegments.length > 0) {
+    return stepSegments;
+  }
+
+  const detailsSegments = inferSegmentsFromText(workout.details, 'details', workout.title);
+  if (detailsSegments.length > 1) {
+    return detailsSegments;
+  }
+
+  if (workout.duration) {
+    return [
+      {
+        id: 'workout-duration',
+        title: workout.title || 'Main Workout',
+        description: workout.subtitle || 'Complete the workout',
+        duration: parseDuration(workout.duration),
+      },
+    ];
+  }
+
+  if (detailsSegments.length === 1) {
+    return detailsSegments;
+  }
+
+  const subtitleSegments = inferSegmentsFromText(workout.subtitle, 'subtitle', workout.title);
+  if (subtitleSegments.length > 0) {
+    return subtitleSegments;
+  }
+
+  return [
+    {
+      id: 'default-main',
+      title: workout.title || 'Main Workout',
+      description: workout.subtitle || 'Complete the workout',
+      duration: DEFAULT_SEGMENT_DURATION,
+    },
+  ];
+}
+
+function buildSegmentsFromStep(step: WorkoutStep, index: number): TimerSegment[] {
+  if (step.intervals) {
+    const intervalSegments: TimerSegment[] = [];
+    const sets = Math.max(1, step.intervals.sets);
+    const workDuration = step.intervals.workDuration > 0 ? step.intervals.workDuration : DEFAULT_SEGMENT_DURATION;
+
+    for (let i = 0; i < sets; i++) {
+      intervalSegments.push({
+        id: `${index}-work-${i}`,
+        title: `${step.title} (Rep ${i + 1}/${sets})`,
+        description: step.description,
+        duration: workDuration,
+      });
+
+      if (step.intervals.recoveryDuration > 0) {
+        intervalSegments.push({
+          id: `${index}-rest-${i}`,
+          title: `${step.title} (Rest ${i + 1}/${sets})`,
+          description: 'Recover',
+          duration: step.intervals.recoveryDuration,
+        });
+      }
+    }
+
+    return intervalSegments;
+  }
+
+  if (step.duration) {
+    return [
+      {
+        id: index,
+        title: step.title,
+        description: step.description,
+        duration: parseDuration(step.duration),
+      },
+    ];
+  }
+
+  const inferredStepSegments = inferSegmentsFromText(step.description, `step-${index}`, step.title);
+  if (inferredStepSegments.length > 0) {
+    return inferredStepSegments;
+  }
+
+  return [
+    {
+      id: index,
+      title: step.title,
+      description: step.description,
+      duration: DEFAULT_SEGMENT_DURATION,
+    },
+  ];
+}
+
+function inferSegmentsFromText(
+  text: string | undefined,
+  idPrefix: string,
+  fallbackTitle: string
+): TimerSegment[] {
+  if (!text) return [];
+
+  const normalizedText = normalizeDurationText(text);
+  const chunks = normalizedText
+    .split(/\s*(?:\+|;|,|\/|\band then\b|\bthen\b|\bfollowed by\b|\band\b)\s*/i)
+    .map(chunk => chunk.trim())
+    .filter(Boolean);
+
+  const segments: TimerSegment[] = [];
+
+  chunks.forEach((chunk, index) => {
+    const values = extractDurationValuesInSeconds(chunk);
+    if (values.length === 0) return;
+
+    const duration = values.length > 1 ? Math.max(...values) : values[0];
+    const segmentTitle = inferSegmentTitle(chunk, fallbackTitle);
+
+    segments.push({
+      id: `${idPrefix}-${index}`,
+      title: segmentTitle,
+      description: chunk,
+      duration,
+    });
+  });
+
+  return segments;
+}
+
+function inferSegmentTitle(text: string, fallbackTitle: string): string {
+  const lower = text.toLowerCase();
+
+  if (/\bwarm[\s-]?up\b/.test(lower)) return 'Warm-up';
+  if (/\bcool[\s-]?down\b/.test(lower)) return 'Cool-down';
+  if (/\bstride/.test(lower)) return 'Strides';
+  if (/\btempo\b/.test(lower)) return 'Tempo';
+  if (/\binterval|rep\b/.test(lower)) return 'Intervals';
+  if (/\brace\b/.test(lower)) return 'Race';
+  if (/\bbike|cycling|cycle\b/.test(lower)) return 'Bike';
+  if (/\bstrength\b/.test(lower)) return 'Strength';
+  if (/\brecovery|recover|rest\b/.test(lower)) return 'Recovery';
+  if (/\brun|jog\b/.test(lower)) return 'Run';
+
+  return fallbackTitle || 'Main Workout';
+}
+
+function extractDurationValuesInSeconds(rawText: string): number[] {
+  if (!rawText) return [];
+
+  const text = normalizeDurationText(rawText);
+  const values: number[] = [];
+  const durationRegex =
+    /(\d+)(?:\s*(?:-|to)\s*(\d+))?\s*(hours?|hrs?|hr|h|minutes?|mins?|min|seconds?|secs?|sec|s)\b(?!\s*\/)/gi;
+
+  let match: RegExpExecArray | null;
+  while ((match = durationRegex.exec(text)) !== null) {
+    const start = Number.parseInt(match[1], 10);
+    const end = match[2] ? Number.parseInt(match[2], 10) : null;
+    const unit = match[3].toLowerCase();
+    const duration = end ? Math.max(start, end) : start;
+
+    if (/^h(?:our|ours)?$|^hr|^hrs/.test(unit)) {
+      values.push(duration * 3600);
+    } else if (/^s(?:ec|ecs|econd|econds)?$/.test(unit)) {
+      values.push(duration);
+    } else {
+      values.push(duration * 60);
+    }
+  }
+
+  if (values.length > 0) return values;
+
+  const numericOnly = text.trim().match(/^(\d+)$/);
+  if (numericOnly) {
+    return [Number.parseInt(numericOnly[1], 10) * 60];
+  }
+
+  return [];
+}
+
+function normalizeDurationText(value: string): string {
+  const numberWords: Record<string, string> = {
+    zero: '0',
+    one: '1',
+    two: '2',
+    three: '3',
+    four: '4',
+    five: '5',
+    six: '6',
+    seven: '7',
+    eight: '8',
+    nine: '9',
+    ten: '10',
+    eleven: '11',
+    twelve: '12',
+    thirteen: '13',
+    fourteen: '14',
+    fifteen: '15',
+    sixteen: '16',
+    seventeen: '17',
+    eighteen: '18',
+    nineteen: '19',
+    twenty: '20',
+    thirty: '30',
+    forty: '40',
+    fifty: '50',
+    sixty: '60',
+    seventy: '70',
+    eighty: '80',
+    ninety: '90',
+  };
+
+  return value
+    .replace(/[•·]/g, ' ')
+    .replace(/([a-z])-(?=[a-z])/gi, '$1 ')
+    .replace(/\b(a|an)\s+(?=(?:hour|hr|minute|min|second|sec))/gi, '1 ')
+    .replace(
+      /\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)\b/gi,
+      (match) => numberWords[match.toLowerCase()] ?? match
+    );
 }
