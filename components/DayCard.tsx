@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { DayPlan, DayType } from '../types';
 
+/** Format ISO date to short display, e.g. "Mon, Feb 12" */
+function formatShortDate(iso: string): string {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
 interface DayCardProps {
   day: DayPlan;
   onStartWorkout: (day: DayPlan) => void;
@@ -64,7 +70,7 @@ export const DayCard: React.FC<DayCardProps> = ({ day, onStartWorkout, onToggleC
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 bg-white px-2 py-1 rounded-full shadow-sm" style={{ color: activeColor }}>
                 <span className="size-2 rounded-full animate-ping" style={{ backgroundColor: activeColor }}></span>
-                {day.type} • Day {day.dayNumber}
+                {day.type} • Day {day.dayNumber}{day.scheduledDate ? ` • ${formatShortDate(day.scheduledDate)}` : ''}
               </span>
             </div>
             <h4 className="text-text-main font-display font-bold text-xl flex items-center gap-2">
@@ -132,7 +138,7 @@ export const DayCard: React.FC<DayCardProps> = ({ day, onStartWorkout, onToggleC
         <div className="p-4 flex-1 flex flex-col gap-1 relative">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold tracking-widest uppercase bg-opacity-10 px-2 py-0.5 rounded-full" style={{ color: activeColor, backgroundColor: `${activeColor}15` }}>
-              {day.type} • Day {day.dayNumber}
+              {day.type} • Day {day.dayNumber}{day.scheduledDate ? ` • ${formatShortDate(day.scheduledDate)}` : ''}
             </span>
             <button
               onClick={(e) => {
@@ -165,8 +171,8 @@ export const DayCard: React.FC<DayCardProps> = ({ day, onStartWorkout, onToggleC
             onToggleComplete?.(day.id);
           }}
           className={`size-6 rounded-full border-2 flex items-center justify-center mr-3 transition-all ${day.isCompleted
-              ? 'bg-green-100 border-green-400'
-              : 'bg-white border-slate-300 hover:border-primary'
+            ? 'bg-green-100 border-green-400'
+            : 'bg-white border-slate-300 hover:border-primary'
             }`}
           title={day.isCompleted ? "Mark as incomplete" : "Mark as complete"}
         >
@@ -178,7 +184,7 @@ export const DayCard: React.FC<DayCardProps> = ({ day, onStartWorkout, onToggleC
           <span className="material-symbols-outlined text-secondary/60">{icon}</span>
         </div>
         <div>
-          <span className="text-[10px] font-bold tracking-widest text-text-light uppercase">{day.type} • Day {day.dayNumber}</span>
+          <span className="text-[10px] font-bold tracking-widest text-text-light uppercase">{day.type} • Day {day.dayNumber}{day.scheduledDate ? ` • ${formatShortDate(day.scheduledDate)}` : ''}</span>
           <h4 className="text-text-main font-display font-bold text-base">{day.title}</h4>
         </div>
       </div>
@@ -201,8 +207,8 @@ export const DayCard: React.FC<DayCardProps> = ({ day, onStartWorkout, onToggleC
                 onToggleComplete?.(day.id);
               }}
               className={`size-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${day.isCompleted
-                  ? 'bg-green-100 border-green-400'
-                  : 'bg-white border-slate-300 hover:border-primary'
+                ? 'bg-green-100 border-green-400'
+                : 'bg-white border-slate-300 hover:border-primary'
                 }`}
               title={day.isCompleted ? "Mark as incomplete" : "Mark as complete"}
             >
@@ -210,7 +216,7 @@ export const DayCard: React.FC<DayCardProps> = ({ day, onStartWorkout, onToggleC
                 <span className="material-symbols-outlined text-green-500 text-[14px]">check</span>
               )}
             </button>
-            <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: activeColor }}>{day.type} • Day {day.dayNumber}</span>
+            <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: activeColor }}>{day.type} • Day {day.dayNumber}{day.scheduledDate ? ` • ${formatShortDate(day.scheduledDate)}` : ''}</span>
           </div>
           <h4 className="text-text-main font-display font-bold text-base">{day.title}</h4>
           <p className="text-text-light text-sm">{day.subtitle}</p>

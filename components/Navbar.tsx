@@ -8,6 +8,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'plan', icon: 'calendar_month', label: 'Plan' },
+    { id: 'calendar', icon: 'date_range', label: 'Calendar' },
     { id: 'stats', icon: 'bar_chart', label: 'Stats' },
     { id: 'races', icon: 'emoji_events', label: 'Races', hasBadge: true },
   ];
@@ -22,17 +23,16 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center gap-1 w-20 transition-colors bubble-hover ${
-                isActive ? 'text-primary-dark' : 'text-slate-400 hover:text-primary'
-              }`}
+              className={`flex flex-col items-center gap-1 w-20 transition-colors bubble-hover ${isActive ? 'text-primary-dark' : 'text-slate-400 hover:text-primary'
+                }`}
             >
               <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-primary/10' : 'hover:bg-slate-50'}`}>
-                 <div className="relative">
-                    <span className="material-symbols-outlined">{tab.icon}</span>
-                    {tab.hasBadge && !isActive && (
-                        <span className="absolute top-0 right-0 size-2 bg-accent rounded-full border border-white"></span>
-                    )}
-                 </div>
+                <div className="relative">
+                  <span className="material-symbols-outlined">{tab.icon}</span>
+                  {tab.hasBadge && !isActive && (
+                    <span className="absolute top-0 right-0 size-2 bg-accent rounded-full border border-white"></span>
+                  )}
+                </div>
               </div>
               <span className="text-[10px] font-bold">{tab.label}</span>
             </button>

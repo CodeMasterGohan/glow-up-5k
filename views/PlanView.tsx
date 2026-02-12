@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usePlanProgress } from '../hooks/usePlanProgress';
 import { WeekCard } from '../components/WeekCard';
 import { Header } from '../components/Header';
+import { StartDatePicker } from '../components/StartDatePicker';
 import { WorkoutTimer } from '../components/WorkoutTimer';
 import { DayPlan } from '../types';
 
@@ -23,7 +24,9 @@ export const PlanView: React.FC = () => {
     resetProgress,
     currentWeek,
     totalWeeks,
-    progressPercent
+    progressPercent,
+    startDate,
+    setStartDate
   } = usePlanProgress();
   const [openWeekId, setOpenWeekId] = useState<string | null>('week-1');
   const [activeWorkout, setActiveWorkout] = useState<DayPlan | null>(null);
@@ -85,6 +88,9 @@ export const PlanView: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Start Date Picker */}
+        <StartDatePicker startDate={startDate} onSetStartDate={setStartDate} />
 
         {planData.map(week => (
           <WeekCard

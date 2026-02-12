@@ -2,6 +2,20 @@ import React from 'react';
 import { WeekPlan, WeekStatus, DayPlan } from '../types';
 import { DayCard } from './DayCard';
 
+/** Format an ISO date to short form, e.g. "Feb 12" */
+function formatShort(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/** Get the date range string for a week's days */
+function getWeekDateRange(days: DayPlan[]): string | null {
+    const firstDate = days[0]?.scheduledDate;
+    const lastDate = days[days.length - 1]?.scheduledDate;
+    if (!firstDate || !lastDate) return null;
+    return `${formatShort(firstDate)} – ${formatShort(lastDate)}`;
+}
+
 interface WeekCardProps {
     week: WeekPlan;
     isOpen: boolean;
@@ -13,6 +27,7 @@ interface WeekCardProps {
 export const WeekCard: React.FC<WeekCardProps> = ({ week, isOpen, onToggle, onStartWorkout, onToggleComplete }) => {
     const isLocked = week.status === WeekStatus.Locked;
     const isCompleted = week.status === WeekStatus.Completed;
+    const dateRange = getWeekDateRange(week.days);
 
     if (isCompleted) {
         return (
@@ -27,7 +42,7 @@ export const WeekCard: React.FC<WeekCardProps> = ({ week, isOpen, onToggle, onSt
                         </div>
                         <div>
                             <p className="text-text-main text-lg font-display font-bold">{week.title}</p>
-                            <p className="text-text-light text-sm font-medium">{week.subtitle}</p>
+                            <p className="text-text-light text-sm font-medium">{week.subtitle}{dateRange ? ` • ${dateRange}` : ''}</p>
                         </div>
                     </div>
                     <span className={`material-symbols-outlined text-text-light transition-transform duration-300 bg-slate-100 rounded-full p-1 ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>
@@ -51,7 +66,7 @@ export const WeekCard: React.FC<WeekCardProps> = ({ week, isOpen, onToggle, onSt
                         </div>
                         <div>
                             <p className="text-text-main text-lg font-display font-bold">{week.title}</p>
-                            <p className="text-text-light text-sm">{week.subtitle}</p>
+                            <p className="text-text-light text-sm">{week.subtitle}{dateRange ? ` • ${dateRange}` : ''}</p>
                         </div>
                     </div>
                     <span className="material-symbols-outlined text-slate-300">chevron_right</span>
@@ -73,7 +88,7 @@ export const WeekCard: React.FC<WeekCardProps> = ({ week, isOpen, onToggle, onSt
                     </div>
                     <div>
                         <p className="text-text-main text-lg font-display font-bold">{week.title}</p>
-                        <p className="text-primary-dark text-sm font-bold">{week.subtitle}</p>
+                        <p className="text-primary-dark text-sm font-bold">{week.subtitle}{dateRange ? ` • ${dateRange}` : ''}</p>
                     </div>
                 </div>
                 <span className={`material-symbols-outlined text-text-light transition-transform duration-300 bg-slate-100 rounded-full p-1 ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>

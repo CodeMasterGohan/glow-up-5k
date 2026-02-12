@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 
 // Lazy load views for code splitting
 const PlanView = lazy(() => import('./views/PlanView').then(module => ({ default: module.PlanView })));
+const CalendarView = lazy(() => import('./views/CalendarView').then(module => ({ default: module.CalendarView })));
 const StatsView = lazy(() => import('./views/StatsView').then(module => ({ default: module.StatsView })));
 const RacesView = lazy(() => import('./views/RacesView').then(module => ({ default: module.RacesView })));
 
@@ -12,6 +13,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'plan': return <PlanView />;
+      case 'calendar': return <CalendarView />;
       case 'stats': return <StatsView />;
       case 'races': return <RacesView />;
       default: return <PlanView />;
@@ -26,7 +28,7 @@ const App: React.FC = () => {
         </div>
       }>
         <div key={activeTab} className="animate-[fadeIn_0.3s_ease-out]">
-            {renderContent()}
+          {renderContent()}
         </div>
       </Suspense>
     </Layout>

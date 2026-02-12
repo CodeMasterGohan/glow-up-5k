@@ -38,6 +38,7 @@ export interface DayPlan {
   isCompleted?: boolean;
   steps?: WorkoutStep[];
   duration?: string;
+  scheduledDate?: string; // ISO date string e.g. "2026-02-12"
 }
 
 export interface WeekPlan {

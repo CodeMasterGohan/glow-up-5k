@@ -5,7 +5,6 @@ export const StatsView: React.FC = () => {
     const {
         plan: planData,
         completedDaysCount,
-        currentStreak,
         currentWeek,
         progressPercent
     } = usePlanProgress();

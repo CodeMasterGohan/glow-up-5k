@@ -2,15 +2,43 @@ import { useState, useEffect, useMemo } from 'react';
 import { planData } from '../data/plan';
 import { WeekStatus, WeekPlan, DayPlan } from '../types';
 
+/**
+ * Given a start date string (ISO), compute the scheduled date for a specific
+ * day within the plan. Day indices are 0-based (weekIndex * 7 + dayIndex).
+ */
+function computeScheduledDate(startDate: string, weekIndex: number, dayIndex: number): string {
+    const start = new Date(startDate + 'T00:00:00');
+    const offset = weekIndex * 7 + dayIndex;
+    const d = new Date(start);
+    d.setDate(d.getDate() + offset);
+    return d.toISOString().split('T')[0];
+}
+
 export const usePlanProgress = () => {
     const [completedDayIds, setCompletedDayIds] = useState<string[]>(() => {
         const saved = localStorage.getItem('glowUp5k_completedDays');
         return saved ? JSON.parse(saved) : [];
     });
 
+    const [startDate, setStartDateState] = useState<string | null>(() => {
+        return localStorage.getItem('glowUp5k_startDate');
+    });
+
     useEffect(() => {
         localStorage.setItem('glowUp5k_completedDays', JSON.stringify(completedDayIds));
     }, [completedDayIds]);
+
+    useEffect(() => {
+        if (startDate) {
+            localStorage.setItem('glowUp5k_startDate', startDate);
+        } else {
+            localStorage.removeItem('glowUp5k_startDate');
+        }
+    }, [startDate]);
+
+    const setStartDate = (date: string | null) => {
+        setStartDateState(date);
+    };
 
     const toggleDay = (dayId: string) => {
         setCompletedDayIds(prev =>
@@ -22,14 +50,16 @@ export const usePlanProgress = () => {
 
     const resetProgress = () => {
         setCompletedDayIds([]);
+        setStartDateState(null);
         localStorage.removeItem('glowUp5k_completedDays');
+        localStorage.removeItem('glowUp5k_startDate');
     };
 
     const plan = useMemo(() => {
         let firstIncompleteFound = false;
 
-        return planData.map(week => {
-            const updatedDays = week.days.map(day => {
+        return planData.map((week, weekIndex) => {
+            const updatedDays = week.days.map((day, dayIndex) => {
                 const isCompleted = completedDayIds.includes(day.id);
                 let isToday = false;
 
@@ -39,10 +69,16 @@ export const usePlanProgress = () => {
                     firstIncompleteFound = true;
                 }
 
+                // Compute scheduled date if start date is set
+                const scheduledDate = startDate
+                    ? computeScheduledDate(startDate, weekIndex, dayIndex)
+                    : undefined;
+
                 return {
                     ...day,
                     isCompleted,
-                    isToday
+                    isToday,
+                    scheduledDate
                 };
             });
 
@@ -61,7 +97,7 @@ export const usePlanProgress = () => {
                 days: updatedDays
             };
         });
-    }, [completedDayIds]);
+    }, [completedDayIds, startDate]);
 
     // Computed stats for StatsView and Header
     const stats = useMemo(() => {
@@ -85,8 +121,6 @@ export const usePlanProgress = () => {
             }
         }
 
-
-
         const totalWeeks = plan.length;
         const progressPercent = totalDaysCount > 0
             ? Math.round((completedDaysCount / totalDaysCount) * 100)
@@ -97,7 +131,6 @@ export const usePlanProgress = () => {
             totalWeeks,
             completedDaysCount,
             totalDaysCount,
-
             progressPercent
         };
     }, [plan]);
@@ -107,6 +140,8 @@ export const usePlanProgress = () => {
         toggleDay,
         resetProgress,
         completedDayIds,
+        startDate,
+        setStartDate,
         ...stats
     };
 };

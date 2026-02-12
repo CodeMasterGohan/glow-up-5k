@@ -2,9 +2,7 @@ services:
   glow-up-5k:
     build:
       context: .
-      args:
-        GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ssh:
+        - default
     ports:
       - "3002:80"
-    env_file:
-      - .env.local
